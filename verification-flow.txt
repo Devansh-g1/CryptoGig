@@ -1,0 +1,138 @@
+EMAIL VERIFICATION FLOW
+========================
+
+REGISTRATION FLOW
+-----------------
+
+User                    Frontend                Backend                 Email
+  |                        |                       |                      |
+  |--[Fill Form]---------->|                       |                      |
+  |                        |                       |                      |
+  |                        |--[POST /register]---->|                      |
+  |                        |                       |                      |
+  |                        |                       |--[Create User]       |
+  |                        |                       |  email_verified=false|
+  |                        |                       |                      |
+  |                        |                       |--[Generate Token]    |
+  |                        |                       |                      |
+  |                        |                       |--[Send Email]------->|
+  |                        |                       |                      |
+  |                        |<--[Success Message]---|                      |
+  |                        |   "Check your email"  |                      |
+  |                        |                       |                      |
+  |<--[Show Message]-------|                       |                      |
+  |   "Check your email"   |                       |                      |
+  |                        |                       |                      |
+  |<-----------------------------------------------[Receive Email]--------|
+  |   "Click to verify"    |                       |                      |
+
+
+VERIFICATION FLOW
+-----------------
+
+User                    Frontend                Backend                 Database
+  |                        |                       |                      |
+  |--[Click Link]--------->|                       |                      |
+  |   /verify-email?token= |                       |                      |
+  |                        |                       |                      |
+  |                        |--[POST /verify-email]>|                      |
+  |                        |   {token: "..."}      |                      |
+  |                        |                       |                      |
+  |                        |                       |--[Validate Token]    |
+  |                        |                       |                      |
+  |                        |                       |--[Update User]------>|
+  |                        |                       |  email_verified=true |
+  |                        |                       |                      |
+  |                        |                       |<--[Success]----------|
+  |                        |                       |                      |
+  |                        |<--[Login Token]-------|                      |
+  |                        |                       |                      |
+  |<--[Redirect]-----------|                       |                      |
+  |   to Dashboard         |                       |                      |
+
+
+LOGIN FLOW (UNVERIFIED)
+------------------------
+
+User                    Frontend                Backend                 Database
+  |                        |                       |                      |
+  |--[Enter Credentials]-->|                       |                      |
+  |                        |                       |                      |
+  |                        |--[POST /login]------->|                      |
+  |                        |                       |                      |
+  |                        |                       |--[Check Password]--->|
+  |                        |                       |                      |
+  |                        |                       |<--[User Data]--------|
+  |                        |                       |  email_verified=false|
+  |                        |                       |                      |
+  |                        |<--[403 Error]---------|                      |
+  |                        |   "Email not verified"|                      |
+  |                        |                       |                      |
+  |<--[Show Error]---------|                       |                      |
+  |   "Please verify email"|                       |                      |
+
+
+LOGIN FLOW (VERIFIED)
+----------------------
+
+User                    Frontend                Backend                 Database
+  |                        |                       |                      |
+  |--[Enter Credentials]-->|                       |                      |
+  |                        |                       |                      |
+  |                        |--[POST /login]------->|                      |
+  |                        |                       |                      |
+  |                        |                       |--[Check Password]--->|
+  |                        |                       |                      |
+  |                        |                       |<--[User Data]--------|
+  |                        |                       |  email_verified=true |
+  |                        |                       |                      |
+  |                        |<--[Login Token]-------|                      |
+  |                        |                       |                      |
+  |<--[Redirect]-----------|                       |                      |
+  |   to Dashboard         |                       |                      |
+
+
+RESEND VERIFICATION FLOW
+-------------------------
+
+User                    Frontend                Backend                 Email
+  |                        |                       |                      |
+  |--[Request Resend]----->|                       |                      |
+  |                        |                       |                      |
+  |                        |--[POST /resend]------>|                      |
+  |                        |   {email, password}   |                      |
+  |                        |                       |                      |
+  |                        |                       |--[Verify Password]   |
+  |                        |                       |                      |
+  |                        |                       |--[Generate Token]    |
+  |                        |                       |                      |
+  |                        |                       |--[Send Email]------->|
+  |                        |                       |                      |
+  |                        |<--[Success]-----------|                      |
+  |                        |                       |                      |
+  |<--[Show Message]-------|                       |                      |
+  |   "Email sent"         |                       |                      |
+
+
+KEY SECURITY FEATURES
+---------------------
+
+1. Token Expiration
+   - Tokens expire after 24 hours
+   - Expired tokens are rejected
+
+2. One-Time Use
+   - Tokens deleted after successful verification
+   - Cannot be reused
+
+3. Password Protection
+   - Resend requires password authentication
+   - Prevents spam/abuse
+
+4. Strict Enforcement
+   - Login blocked until verified
+   - No bypass mechanisms
+
+5. Secure Storage
+   - Tokens stored separately from users
+   - Includes creation and expiration timestamps
