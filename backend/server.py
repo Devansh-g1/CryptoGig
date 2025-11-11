@@ -1231,7 +1231,9 @@ class Channel(BaseModel):
     name: str
     skill: str
     creator_id: str
+    builder_id: str  # Current builder (can transfer)
     members: List[str] = []
+    member_join_times: dict = {}  # Track when each member joined
     member_count: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     description: Optional[str] = None
@@ -1268,10 +1270,12 @@ async def create_channel(channel_data: ChannelCreate, current_user: dict = Depen
     channel_dict = channel_data.model_dump()
     channel_dict['id'] = str(uuid.uuid4())
     channel_dict['creator_id'] = current_user['id']
+    channel_dict['builder_id'] = current_user['id']  # Creator is the first builder
     channel_dict['members'] = [current_user['id']]
     channel_dict['member_count'] = 1
     channel_dict['skill'] = channel_data.skill.lower()
     channel_dict['created_at'] = datetime.now(timezone.utc).isoformat()
+    channel_dict['member_join_times'] = {current_user['id']: datetime.now(timezone.utc).isoformat()}
     
     await db.channels.insert_one(channel_dict)
     
@@ -1300,11 +1304,13 @@ async def join_channel(channel_id: str, current_user: dict = Depends(get_current
     if current_user['id'] in channel['members']:
         raise HTTPException(status_code=400, detail="Already a member")
     
+    join_time = datetime.now(timezone.utc).isoformat()
     await db.channels.update_one(
         {'id': channel_id},
         {
             '$push': {'members': current_user['id']},
-            '$inc': {'member_count': 1}
+            '$inc': {'member_count': 1},
+            '$set': {f'member_join_times.{current_user["id"]}': join_time}
         }
     )
     
@@ -1319,15 +1325,26 @@ async def leave_channel(channel_id: str, current_user: dict = Depends(get_curren
     if current_user['id'] not in channel['members']:
         raise HTTPException(status_code=400, detail="Not a member")
     
-    # Creator cannot leave their own channel
-    if current_user['id'] == channel['creator_id']:
-        raise HTTPException(status_code=400, detail="Creator cannot leave channel")
+    # If builder is leaving, transfer to earliest member
+    update_ops = {
+        '$pull': {'members': current_user['id']},
+        '$inc': {'member_count': -1},
+        '$unset': {f'member_join_times.{current_user["id"]}': ''}
+    }
+    
+    if current_user['id'] == channel.get('builder_id'):
+        # Find earliest remaining member
+        member_join_times = channel.get('member_join_times', {})
+        remaining_members = {uid: time for uid, time in member_join_times.items() if uid != current_user['id']}
+        
+        if remaining_members:
+            # Sort by join time and get earliest
+            earliest_member = min(remaining_members.items(), key=lambda x: x[1])[0]
+            update_ops['$set'] = {'builder_id': earliest_member}
     
     await db.channels.update_one(
         {'id': channel_id},
-        {
-            '$pull': {'members': current_user['id']},
-            '$inc': {'member_count': -1}
+        update_ops
         }
     )
     
@@ -1455,8 +1472,11 @@ async def get_channel_members(channel_id: str, current_user: dict = Depends(get_
     if current_user['id'] not in channel['members']:
         raise HTTPException(status_code=403, detail="Must be a member to view members")
     
-    # Get member details
+    # Get member details with full profiles
     member_details = []
+    builder_id = channel.get('builder_id', channel['creator_id'])
+    member_join_times = channel.get('member_join_times', {})
+    
     for member_id in channel['members']:
         user = await db.users.find_one({'id': member_id}, {'_id': 0, 'password_hash': 0, 'verification_token': 0})
         if user:
@@ -1464,9 +1484,20 @@ async def get_channel_members(channel_id: str, current_user: dict = Depends(get_
                 'id': user['id'],
                 'name': user['name'],
                 'email': user['email'],
+                'bio': user.get('bio'),
+                'portfolio_link': user.get('portfolio_link'),
+                'github_link': user.get('github_link'),
+                'skills': user.get('skills', []),
+                'rating': user.get('rating', 0.0),
+                'completed_jobs_count': user.get('completed_jobs_count', 0),
                 'role': user.get('role', 'freelancer'),
-                'is_creator': user['id'] == channel['creator_id']
+                'is_builder': user['id'] == builder_id,
+                'is_creator': user['id'] == channel['creator_id'],
+                'joined_at': member_join_times.get(member_id)
             })
+    
+    # Sort by builder first, then by join time
+    member_details.sort(key=lambda x: (not x['is_builder'], x.get('joined_at') or ''))
     
     return member_details
 
