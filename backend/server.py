@@ -811,7 +811,9 @@ async def create_job(job_data: JobCreate, current_user: dict = Depends(get_curre
     job_dict['client_id'] = current_user['id']
     job_dict['freelancer_id'] = None
     job_dict['has_team'] = False
-    job_dict['status'] = JobStatus.CREATED
+    job_dict['status'] = 'PENDING_PAYMENT'  # Job starts as pending payment
+    job_dict['escrow_paid'] = False  # Track if escrow is paid
+    job_dict['escrow_tx_hash'] = None  # Store transaction hash
     job_dict['created_at'] = datetime.now(timezone.utc).isoformat()
     job_dict['completed_at'] = None
     
@@ -820,7 +822,9 @@ async def create_job(job_data: JobCreate, current_user: dict = Depends(get_curre
     if isinstance(job_dict['created_at'], str):
         job_dict['created_at'] = datetime.fromisoformat(job_dict['created_at'])
     
-    return Job(**job_dict)
+    # Return job with payment instructions
+    job_response = Job(**job_dict)
+    return job_response
 
 @api_router.get("/jobs", response_model=List[Job])
 async def get_jobs(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
@@ -831,12 +835,13 @@ async def get_jobs(status: Optional[str] = None, current_user: dict = Depends(ge
     # Filter based on active role
     active_role = current_user.get('active_role', current_user['role'])
     if active_role == 'client':
+        # Clients see all their jobs (paid and unpaid)
         query['client_id'] = current_user['id']
     elif active_role == 'freelancer':
-        # Show available jobs or their accepted jobs
+        # Freelancers only see jobs with confirmed escrow payment
         query = {'$or': [
-            {'status': JobStatus.CREATED},
-            {'freelancer_id': current_user['id']}
+            {'status': JobStatus.CREATED, 'escrow_paid': True},  # Only paid jobs
+            {'freelancer_id': current_user['id']}  # Or their accepted jobs
         ]}
     
     jobs = await db.jobs.find(query, {'_id': 0}).to_list(1000)
@@ -861,6 +866,47 @@ async def get_job(job_id: str, current_user: dict = Depends(get_current_user)):
         job['completed_at'] = datetime.fromisoformat(job['completed_at'])
     
     return Job(**job)
+
+@api_router.post("/jobs/{job_id}/confirm-payment")
+async def confirm_escrow_payment(job_id: str, payment_data: dict, current_user: dict = Depends(get_current_user)):
+    """Confirm escrow payment and make job visible to freelancers"""
+    job = await db.jobs.find_one({'id': job_id})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Only job creator can confirm payment
+    if job['client_id'] != current_user['id']:
+        raise HTTPException(status_code=403, detail="Only job creator can confirm payment")
+    
+    # Check if already paid
+    if job.get('escrow_paid'):
+        raise HTTPException(status_code=400, detail="Escrow already paid for this job")
+    
+    # Get transaction hash from request
+    tx_hash = payment_data.get('tx_hash')
+    if not tx_hash:
+        raise HTTPException(status_code=400, detail="Transaction hash required")
+    
+    # Update job status to CREATED (now visible to freelancers)
+    await db.jobs.update_one(
+        {'id': job_id},
+        {
+            '$set': {
+                'status': JobStatus.CREATED,
+                'escrow_paid': True,
+                'escrow_tx_hash': tx_hash,
+                'payment_confirmed_at': datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {
+        'success': True,
+        'message': 'Escrow payment confirmed. Job is now visible to freelancers.',
+        'job_id': job_id,
+        'tx_hash': tx_hash,
+        'arbitrator_wallet': ARBITRATOR_WALLET
+    }
 
 @api_router.post("/jobs/{job_id}/accept")
 async def accept_job(job_id: str, accept_data: JobAccept, current_user: dict = Depends(get_current_user)):
