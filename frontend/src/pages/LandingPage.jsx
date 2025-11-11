@@ -92,17 +92,10 @@ export default function LandingPage() {
         toast.success('Welcome back!');
         navigate(`/${user.role}`);
       } else {
-        // Register with email verification
-        const response = await axios.post(`${API}/auth/register-with-email`, {
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-          role: formData.role
-        });
-        
-        setEmailSent(true);
-        toast.success('Verification email sent! Check your inbox.');
-        setFormData({ email: '', password: '', name: '', role: 'client' });
+        // Register instantly without email verification
+        const user = await register(formData.email, formData.password, formData.name, formData.role);
+        toast.success('Account created successfully!');
+        navigate(`/${user.role}`);
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Authentication failed');
