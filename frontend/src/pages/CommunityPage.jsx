@@ -24,6 +24,8 @@ export default function CommunityPage() {
   const [voteDialogOpen, setVoteDialogOpen] = useState(false);
   const [voteTarget, setVoteTarget] = useState({ userId: '', reason: '' });
   const [channelMembers, setChannelMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberProfileOpen, setMemberProfileOpen] = useState(false);
 
   useEffect(() => {
     loadChannels();
@@ -219,7 +221,7 @@ export default function CommunityPage() {
           </Dialog>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selectedChannel ? '1fr 2fr' : '1fr', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: selectedChannel ? '1fr 2fr 1fr' : '1fr', gap: '2rem' }}>
           {/* Channels List */}
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem' }}>
@@ -389,7 +391,171 @@ export default function CommunityPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Members Sidebar */}
+          {selectedChannel && (
+            <Card className="bg-slate-800 border-slate-700" style={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
+              <CardHeader>
+                <CardTitle style={{ color: 'white', fontSize: '1.125rem' }}>
+                  Members ({channelMembers.length})
+                </CardTitle>
+              </CardHeader>
+              <ScrollArea style={{ flex: 1, padding: '0 1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {channelMembers.map(member => (
+                    <div
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedMember(member);
+                        setMemberProfileOpen(true);
+                      }}
+                      style={{
+                        padding: '0.75rem',
+                        background: 'rgba(15, 23, 42, 0.5)',
+                        borderRadius: '0.5rem',
+                        border: '1px solid rgba(148, 163, 184, 0.1)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(15, 23, 42, 0.5)';
+                        e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.1)';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={{ color: 'white', fontWeight: '500', fontSize: '0.875rem' }}>
+                          {member.name}
+                        </span>
+                        {member.is_builder && (
+                          <Badge style={{ background: 'rgba(234, 179, 8, 0.2)', color: '#fbbf24', fontSize: '0.625rem', padding: '0.125rem 0.375rem' }}>
+                            ⚡ Builder
+                          </Badge>
+                        )}
+                      </div>
+                      {member.skills && member.skills.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
+                          {member.skills.slice(0, 2).map((skill, idx) => (
+                            <Badge key={idx} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', fontSize: '0.625rem', padding: '0.125rem 0.25rem' }}>
+                              {skill}
+                            </Badge>
+                          ))}
+                          {member.skills.length > 2 && (
+                            <span style={{ color: '#64748b', fontSize: '0.625rem' }}>+{member.skills.length - 2}</span>
+                          )}
+                        </div>
+                      )}
+                      <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        ⭐ {member.rating.toFixed(1)} • {member.completed_jobs_count} jobs
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </Card>
+          )}
         </div>
+
+        {/* Member Profile Dialog */}
+        <Dialog open={memberProfileOpen} onOpenChange={setMemberProfileOpen}>
+          <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle style={{ color: 'white', fontSize: '1.5rem' }}>
+                {selectedMember?.name}
+                {selectedMember?.is_builder && (
+                  <Badge style={{ background: 'rgba(234, 179, 8, 0.2)', color: '#fbbf24', marginLeft: '0.5rem' }}>
+                    ⚡ Builder
+                  </Badge>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedMember && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                    {selectedMember.email}
+                  </p>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                      ⭐ {selectedMember.rating.toFixed(1)} rating
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                      ✅ {selectedMember.completed_jobs_count} jobs completed
+                    </span>
+                  </div>
+                </div>
+
+                {selectedMember.bio && (
+                  <div>
+                    <h3 style={{ color: 'white', fontWeight: '600', marginBottom: '0.5rem' }}>Bio</h3>
+                    <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{selectedMember.bio}</p>
+                  </div>
+                )}
+
+                {selectedMember.skills && selectedMember.skills.length > 0 && (
+                  <div>
+                    <h3 style={{ color: 'white', fontWeight: '600', marginBottom: '0.5rem' }}>Skills</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {selectedMember.skills.map((skill, idx) => (
+                        <Badge key={idx} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }}>
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {selectedMember.portfolio_link && (
+                    <a
+                      href={selectedMember.portfolio_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#60a5fa',
+                        fontSize: '0.875rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      🔗 Portfolio
+                    </a>
+                  )}
+                  {selectedMember.github_link && (
+                    <a
+                      href={selectedMember.github_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#60a5fa',
+                        fontSize: '0.875rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      💻 GitHub
+                    </a>
+                  )}
+                </div>
+
+                {selectedMember.joined_at && (
+                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #334155' }}>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                      Joined {new Date(selectedMember.joined_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
