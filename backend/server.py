@@ -1215,10 +1215,12 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/")
 async def root():
+    cors_origins = os.environ.get('CORS_ORIGINS', '*')
     return {
         "message": "CryptoGig API", 
-        "version": "2.0.0-no-email-verification",
-        "features": ["instant_registration", "mongodb_integrated"],
+        "version": "2.1.0-CORS-FIXED",
+        "features": ["instant_registration", "mongodb_integrated", "cors_configured"],
+        "cors_origins": cors_origins,
         "deployed": datetime.now(timezone.utc).isoformat()
     }
 
@@ -1487,12 +1489,12 @@ async def health_check():
         await db.command("ping")
         return {
             "status": "healthy",
-            "version": "2.0.0-FIXED-NO-EMAIL-VERIFICATION",
+            "version": "2.1.0-CORS-FIXED",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "database": "connected",
             "service": "cryptogig-backend",
-            "features": ["instant_registration", "mongodb_integrated", "no_email_verification"],
-            "git_commit": "force-deploy-v2"
+            "features": ["instant_registration", "mongodb_integrated", "no_email_verification", "cors_configured"],
+            "git_commit": "cors-fix-v1"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")

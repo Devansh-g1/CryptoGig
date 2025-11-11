@@ -111,7 +111,7 @@ export default function ClientDashboard() {
         ? formData.required_skills.split(',').map((s) => s.trim()).filter(s => s)
         : [];
       
-      // Step 1: Create job in database
+      // Create job in database (status: PENDING_PAYMENT)
       const response = await axios.post(`${API}/jobs`, {
         title: formData.title,
         description: formData.description,
@@ -121,21 +121,16 @@ export default function ClientDashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      const jobId = response.data.id;
-      toast.success('Job created in database!');
-      
-      // Step 2: Fund job via smart contract (if wallet connected)
-      if (isConnected && address) {
-        toast.info('Now funding job via smart contract...');
-        // Note: This would integrate with the useFundJob hook
-        // For now, we'll show the funding option in the job card
-        toast.info('Connect your wallet and fund the job to activate escrow protection.');
-      } else {
-        toast.info('Connect your wallet to fund this job with crypto escrow.');
-      }
-      
+      const newJob = response.data;
       setShowCreateJob(false);
       setFormData({ title: '', description: '', budget_usdc: '', required_skills: '' });
+      
+      // Show payment instructions
+      toast.success('Job created! Now transfer funds to arbitrator to activate.');
+      toast.info(`Send ${formData.budget_usdc} USDC to: ${ARBITRATOR_WALLET.slice(0,10)}...`, {
+        duration: 10000
+      });
+      
       fetchJobs();
       fetchStats();
     } catch (error) {
