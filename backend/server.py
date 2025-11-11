@@ -1345,7 +1345,6 @@ async def leave_channel(channel_id: str, current_user: dict = Depends(get_curren
     await db.channels.update_one(
         {'id': channel_id},
         update_ops
-        }
     )
     
     return {'success': True, 'message': 'Left channel'}
