@@ -33,6 +33,7 @@ export default function CommunityPage() {
 
   useEffect(() => {
     if (selectedChannel) {
+      console.log('Selected channel:', selectedChannel);
       loadMessages();
       loadChannelMembers();
       const interval = setInterval(loadMessages, 3000); // Refresh messages every 3 seconds
@@ -223,7 +224,14 @@ export default function CommunityPage() {
           </Dialog>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selectedChannel ? '1fr 2fr 1fr' : '1fr', gap: '2rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: selectedChannel ? '300px 1fr 280px' : '1fr', 
+          gap: '1.5rem',
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'visible'
+        }}>
           {/* Channels List */}
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem' }}>
@@ -394,17 +402,18 @@ export default function CommunityPage() {
             </Card>
           )}
 
-          {/* Members Sidebar */}
+          {/* Members Sidebar - ALWAYS SHOW WHEN CHANNEL SELECTED */}
           {selectedChannel && (
-            <Card className="bg-slate-800 border-slate-700" style={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
-              <CardHeader>
-                <CardTitle style={{ color: 'white', fontSize: '1.125rem' }}>
-                  Members ({channelMembers.length})
-                </CardTitle>
-              </CardHeader>
-              <ScrollArea style={{ flex: 1, padding: '0 1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {channelMembers.map(member => (
+            <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '1rem', borderRadius: '0.5rem', border: '2px solid #3b82f6' }}>
+              <Card className="bg-slate-800 border-slate-700" style={{ height: '600px', display: 'flex', flexDirection: 'column', minWidth: '250px' }}>
+                <CardHeader style={{ background: 'rgba(59, 130, 246, 0.1)', borderBottom: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                  <CardTitle style={{ color: '#60a5fa', fontSize: '1.125rem' }}>
+                    👥 Members ({channelMembers.length})
+                  </CardTitle>
+                </CardHeader>
+                <ScrollArea style={{ flex: 1, padding: '0 1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {channelMembers.map(member => (
                     <div
                       key={member.id}
                       onClick={() => {
@@ -463,6 +472,7 @@ export default function CommunityPage() {
                 </div>
               </ScrollArea>
             </Card>
+            </div>
           )}
         </div>
 
