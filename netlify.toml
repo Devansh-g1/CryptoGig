@@ -1,0 +1,21 @@
+[build]
+  base = "frontend"
+  publish = "frontend/build"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  VITE_BACKEND_URL = "https://clientarbitrator-production.up.railway.app/api"
+  VITE_WALLETCONNECT_PROJECT_ID = "2f05a7cde2bb14b478f07c00594118b1"
+  VITE_USDC_ADDRESS = "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582"
+  VITE_CONTRACT_ADDRESS = ""
+  VITE_GOOGLE_CLIENT_ID = ""
+  VITE_GITHUB_CLIENT_ID = ""
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_BACKEND_URL = "https://clientarbitrator-production.up.railway.app/api"
