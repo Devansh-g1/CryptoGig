@@ -50,7 +50,9 @@ export default function ProfileModal({ open, onClose, user, onUpdate }) {
 
       await axios.put(`${API}/profile`, updateData);
       toast.success('Profile updated successfully!');
-      onUpdate();
+      if (onUpdate) {
+        onUpdate();
+      }
       onClose();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update profile');

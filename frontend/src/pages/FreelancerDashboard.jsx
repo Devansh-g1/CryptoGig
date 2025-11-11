@@ -417,6 +417,10 @@ export default function FreelancerDashboard() {
         open={showProfile} 
         onClose={() => setShowProfile(false)} 
         user={user}
+        onUpdate={() => {
+          fetchJobs();
+          fetchStats();
+        }}
       />
     </div>
   );
