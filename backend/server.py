@@ -1499,10 +1499,14 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
 # Add CORS middleware BEFORE including router
+cors_origins_str = os.environ.get('CORS_ORIGINS', '*')
+cors_origins = [origin.strip() for origin in cors_origins_str.split(',')] if cors_origins_str != '*' else ['*']
+logger.info(f"CORS Origins configured: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
