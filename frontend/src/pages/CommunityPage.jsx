@@ -56,9 +56,11 @@ export default function CommunityPage() {
       const res = await axios.get(`${API}/channels/${selectedChannel.id}/members`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Channel members loaded:', res.data);
       setChannelMembers(res.data);
     } catch (error) {
-      console.error('Failed to load members');
+      console.error('Failed to load members:', error.response?.data || error.message);
+      toast.error('Failed to load channel members');
     }
   };
 
@@ -453,6 +455,11 @@ export default function CommunityPage() {
                       </div>
                     </div>
                   ))}
+                  {channelMembers.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                      <p>Loading members...</p>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </Card>
