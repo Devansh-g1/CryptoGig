@@ -12,6 +12,12 @@ module.exports = {
     },
   },
   networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC || "https://ethereum-sepolia-rpc.publicnode.com",
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 11155111,
+      timeout: 60000,
+    },
     polygonMumbai: {
       url: process.env.POLYGON_MUMBAI_RPC || "https://rpc-mumbai.maticvigil.com",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
@@ -25,6 +31,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
+      sepolia: process.env.ETHERSCAN_API_KEY || "",
       polygonMumbai: process.env.POLYGONSCAN_API_KEY || "",
       polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
     },

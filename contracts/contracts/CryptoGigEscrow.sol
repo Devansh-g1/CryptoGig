@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -44,7 +44,7 @@ contract CryptoGigEscrow is ReentrancyGuard, Ownable {
         _;
     }
     
-    constructor(address _usdcAddress, address _arbitrator) {
+    constructor(address _usdcAddress, address _arbitrator) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "Invalid USDC");
         require(_arbitrator != address(0), "Invalid arbitrator");
         usdc = IERC20(_usdcAddress);
@@ -95,18 +95,6 @@ contract CryptoGigEscrow is ReentrancyGuard, Ownable {
         
         job.status = JobStatus.Completed;
         job.completedAt = block.timestamp;
-    }
-    
-    function assignFreelancer(uint256 _jobId, address _freelancer) external {
-        Job storage job = jobs[_jobId];
-        require(job.client == msg.sender, "Only client can assign");
-        require(job.status == JobStatus.Funded, "Job not funded");
-        require(_freelancer != address(0), "Invalid freelancer");
-        
-        job.freelancer = _freelancer;
-        job.status = JobStatus.InProgress;
-        
-        emit JobAssigned(_jobId, _freelancer);
     }
     
     function releasePayment(uint256 _jobId) external onlyArbitrator nonReentrant {
