@@ -71,6 +71,7 @@ class UserRole(str, Enum):
     ARBITRATOR = "arbitrator"
 
 class JobStatus(str, Enum):
+    PENDING_PAYMENT = "pending_payment"
     CREATED = "created"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -811,7 +812,7 @@ async def create_job(job_data: JobCreate, current_user: dict = Depends(get_curre
     job_dict['client_id'] = current_user['id']
     job_dict['freelancer_id'] = None
     job_dict['has_team'] = False
-    job_dict['status'] = 'PENDING_PAYMENT'  # Job starts as pending payment
+    job_dict['status'] = JobStatus.PENDING_PAYMENT.value  # Job starts as pending payment
     job_dict['escrow_paid'] = False  # Track if escrow is paid
     job_dict['escrow_tx_hash'] = None  # Store transaction hash
     job_dict['created_at'] = datetime.now(timezone.utc).isoformat()
