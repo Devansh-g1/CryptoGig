@@ -1520,12 +1520,12 @@ async def health_check():
         await db.command("ping")
         return {
             "status": "healthy",
-            "version": "2.1.0-CORS-FIXED",
+            "version": "2.2.0-SEPOLIA-READY",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "database": "connected",
             "service": "cryptogig-backend",
-            "features": ["instant_registration", "mongodb_integrated", "no_email_verification", "cors_configured"],
-            "git_commit": "cors-fix-v1"
+            "features": ["instant_registration", "mongodb_integrated", "no_email_verification", "cors_configured", "pending_payment_status"],
+            "git_commit": "sepolia-v1"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
