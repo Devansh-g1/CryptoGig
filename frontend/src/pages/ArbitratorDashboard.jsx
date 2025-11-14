@@ -312,37 +312,75 @@ export default function ArbitratorDashboard() {
             ) : (
               pendingDisputes.map((dispute) => {
                 const job = jobs.find(j => j.id === dispute.job_id);
+                const arbitratorFee = job ? job.budget_usdc * 0.08 : 0;
+                const remainingAmount = job ? job.budget_usdc - arbitratorFee : 0;
+                
                 return (
                   <Card key={dispute.id} className="glass-effect border-red-900/30 bg-slate-900/50 card-hover" data-testid={`dispute-${dispute.id}`}>
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <CardTitle className="text-xl mb-2 text-red-400">Dispute: {job?.title}</CardTitle>
-                          <CardDescription className="text-slate-400 mb-3">{dispute.reason}</CardDescription>
-                          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-3">
-                            <p className="text-sm text-red-200">
-                              <AlertCircle className="w-4 h-4 inline mr-2" />
-                              Raised by: {dispute.raised_by.slice(0, 8)}...
+                          <CardTitle className="text-xl mb-2 text-red-400">
+                            <AlertCircle className="w-5 h-5 inline mr-2" />
+                            Dispute: {job?.title}
+                          </CardTitle>
+                          <CardDescription className="text-slate-400 mb-3">{job?.description}</CardDescription>
+                          
+                          {/* Dispute Reason */}
+                          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-3">
+                            <p className="text-sm font-semibold text-red-300 mb-2">Dispute Reason:</p>
+                            <p className="text-sm text-red-200">{dispute.reason}</p>
+                            <p className="text-xs text-red-300 mt-2">
+                              Raised by: {dispute.raised_by.slice(0, 8)}... on {new Date(dispute.created_at).toLocaleDateString()}
                             </p>
                           </div>
+
+                          {/* Job Details */}
                           {job && (
-                            <div className="flex gap-4 text-sm">
-                              <span className="text-slate-500">Client: <span className="text-slate-300">{job.client_id.slice(0, 8)}...</span></span>
-                              <span className="text-slate-500">Freelancer: <span className="text-slate-300">{job.freelancer_id?.slice(0, 8)}...</span></span>
+                            <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Client:</span>
+                                <span className="text-slate-300 font-mono">{job.client_id.slice(0, 12)}...</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Freelancer:</span>
+                                <span className="text-slate-300 font-mono">{job.freelancer_id?.slice(0, 12)}...</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Job Status:</span>
+                                <span className="text-amber-300">{job.status}</span>
+                              </div>
                             </div>
                           )}
                         </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-red-400">${job?.budget_usdc}</div>
-                          <div className="text-xs text-slate-500">USDC</div>
-                          <div className="text-xs text-amber-400 mt-1">Fee: ${(job?.budget_usdc * 0.08).toFixed(2)}</div>
+                        
+                        {/* Amount Breakdown */}
+                        <div className="text-right ml-4">
+                          <div className="bg-slate-800 rounded-lg p-3 space-y-2">
+                            <div>
+                              <div className="text-xs text-slate-400">Total Budget</div>
+                              <div className="text-2xl font-bold text-red-400">${job?.budget_usdc}</div>
+                              <div className="text-xs text-slate-500">USDC</div>
+                            </div>
+                            <div className="border-t border-slate-700 pt-2 space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-400">Your Fee (8%):</span>
+                                <span className="text-green-400">${arbitratorFee.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-400">To Distribute:</span>
+                                <span className="text-cyan-400">${remainingAmount.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between pt-4 border-t border-slate-700">
                         <div className="text-sm text-amber-300">
-                          Review and resolve the dispute fairly
+                          <Shield className="w-4 h-4 inline mr-2" />
+                          Review evidence and decide fund distribution
                         </div>
                         <Button
                           onClick={() => {
@@ -396,82 +434,179 @@ export default function ArbitratorDashboard() {
 
       {/* Resolve Dispute Dialog */}
       <Dialog open={showResolve} onOpenChange={setShowResolve}>
-        <DialogContent className="sm:max-w-lg bg-slate-900 border-slate-700" data-testid="resolve-dialog">
+        <DialogContent className="sm:max-w-2xl bg-slate-900 border-slate-700" data-testid="resolve-dialog">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold gradient-text">Resolve Dispute</DialogTitle>
+            <DialogTitle className="text-2xl font-bold gradient-text">
+              <Shield className="w-6 h-6 inline mr-2" />
+              Resolve Dispute
+            </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Decide how to split the funds between client and freelancer
+              Decide how to distribute funds between client and freelancer
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleResolveDispute} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="client-percentage">Client %</Label>
-                <Input
-                  id="client-percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={resolution.client_percentage}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setResolution({
-                      ...resolution,
-                      client_percentage: val,
-                      freelancer_percentage: 100 - val,
-                    });
-                  }}
-                  className="bg-slate-800 border-slate-700"
-                  data-testid="client-percentage-input"
-                />
-              </div>
-              <div>
-                <Label htmlFor="freelancer-percentage">Freelancer %</Label>
-                <Input
-                  id="freelancer-percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={resolution.freelancer_percentage}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setResolution({
-                      ...resolution,
-                      freelancer_percentage: val,
-                      client_percentage: 100 - val,
-                    });
-                  }}
-                  className="bg-slate-800 border-slate-700"
-                  data-testid="freelancer-percentage-input"
-                />
-              </div>
-            </div>
+            {selectedDispute && (() => {
+              const job = jobs.find(j => j.id === selectedDispute.job_id);
+              const arbitratorFee = job ? job.budget_usdc * 0.08 : 0;
+              const remainingAmount = job ? job.budget_usdc - arbitratorFee : 0;
+              const clientAmount = (remainingAmount * resolution.client_percentage) / 100;
+              const freelancerAmount = (remainingAmount * resolution.freelancer_percentage) / 100;
+              
+              return (
+                <>
+                  {/* Dispute Info */}
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-red-300 mb-2">Dispute Reason:</p>
+                    <p className="text-sm text-red-200">{selectedDispute.reason}</p>
+                  </div>
+
+                  {/* Distribution Sliders */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <Label htmlFor="client-percentage" className="text-slate-300">Client Refund</Label>
+                        <span className="text-cyan-400 font-bold">{resolution.client_percentage}%</span>
+                      </div>
+                      <Input
+                        id="client-percentage"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={resolution.client_percentage}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          setResolution({
+                            ...resolution,
+                            client_percentage: val,
+                            freelancer_percentage: 100 - val,
+                          });
+                        }}
+                        className="w-full"
+                        data-testid="client-percentage-input"
+                      />
+                      <div className="flex justify-between text-xs text-slate-500 mt-1">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <Label htmlFor="freelancer-percentage" className="text-slate-300">Freelancer Payment</Label>
+                        <span className="text-green-400 font-bold">{resolution.freelancer_percentage}%</span>
+                      </div>
+                      <Input
+                        id="freelancer-percentage"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={resolution.freelancer_percentage}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          setResolution({
+                            ...resolution,
+                            freelancer_percentage: val,
+                            client_percentage: 100 - val,
+                          });
+                        }}
+                        className="w-full"
+                        data-testid="freelancer-percentage-input"
+                      />
+                      <div className="flex justify-between text-xs text-slate-500 mt-1">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amount Breakdown */}
+                  <div className="bg-slate-800 rounded-lg p-4 space-y-3">
+                    <div className="text-center border-b border-slate-700 pb-3">
+                      <div className="text-sm text-slate-400">Total Budget</div>
+                      <div className="text-3xl font-bold text-white">${job?.budget_usdc}</div>
+                      <div className="text-xs text-slate-500">USDC</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-xs text-slate-400 mb-1">Client Gets</div>
+                        <div className="text-xl font-bold text-cyan-400">${clientAmount.toFixed(2)}</div>
+                        <div className="text-xs text-slate-500">{resolution.client_percentage}%</div>
+                      </div>
+                      
+                      <div>
+                        <div className="text-xs text-slate-400 mb-1">Freelancer Gets</div>
+                        <div className="text-xl font-bold text-green-400">${freelancerAmount.toFixed(2)}</div>
+                        <div className="text-xs text-slate-500">{resolution.freelancer_percentage}%</div>
+                      </div>
+                      
+                      <div>
+                        <div className="text-xs text-slate-400 mb-1">Your Fee</div>
+                        <div className="text-xl font-bold text-purple-400">${arbitratorFee.toFixed(2)}</div>
+                        <div className="text-xs text-slate-500">8%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Presets */}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-cyan-500/50 text-cyan-300"
+                      onClick={() => setResolution({ ...resolution, client_percentage: 100, freelancer_percentage: 0 })}
+                    >
+                      Full Refund
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-slate-500/50"
+                      onClick={() => setResolution({ ...resolution, client_percentage: 50, freelancer_percentage: 50 })}
+                    >
+                      50/50 Split
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-green-500/50 text-green-300"
+                      onClick={() => setResolution({ ...resolution, client_percentage: 0, freelancer_percentage: 100 })}
+                    >
+                      Full Payment
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* Resolution Notes */}
             <div>
-              <Label htmlFor="resolution-notes">Resolution Notes</Label>
+              <Label htmlFor="resolution-notes" className="text-slate-300">Resolution Explanation</Label>
               <Textarea
                 id="resolution-notes"
-                placeholder="Explain your decision..."
+                placeholder="Explain your decision and reasoning..."
                 value={resolution.resolution}
                 onChange={(e) => setResolution({ ...resolution, resolution: e.target.value })}
                 required
                 rows={4}
-                className="bg-slate-800 border-slate-700"
+                className="bg-slate-800 border-slate-700 mt-2"
                 data-testid="resolution-notes-input"
               />
             </div>
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-              <p className="text-sm text-purple-200">
-                <Shield className="w-4 h-4 inline mr-2" />
-                You'll receive 8% of the total budget as arbitration fee
-              </p>
-            </div>
+
+            {/* Submit */}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
               disabled={loading}
               data-testid="submit-resolution-btn"
             >
-              {loading ? 'Resolving...' : 'Resolve Dispute'}
+              {loading ? 'Resolving...' : '✅ Confirm Resolution'}
             </Button>
           </form>
         </DialogContent>

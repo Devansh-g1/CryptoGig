@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import SimpleWalletConnect from '../components/SimpleWalletConnect';
 import { useFundJob } from '../hooks/useFundJob';
+import SwapToUSDC from '../components/SwapToUSDC';
 import {
   Plus,
   Briefcase,
@@ -53,6 +54,7 @@ export default function ClientDashboard() {
   const [showDispute, setShowDispute] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showFundDialog, setShowFundDialog] = useState(false);
+  const [showSwapDialog, setShowSwapDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -526,9 +528,9 @@ export default function ClientDashboard() {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <Button
-                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                   onClick={async () => {
                     const success = await fundJob(selectedJob.id, selectedJob.budget_usdc);
                     if (success) {
@@ -540,11 +542,24 @@ export default function ClientDashboard() {
                   }}
                   disabled={isFunding}
                 >
-                  {isFunding ? 'Processing...' : '💰 Fund Now'}
+                  {isFunding ? 'Processing...' : '💰 Fund with USDC'}
                 </Button>
+                
                 <Button
                   variant="outline"
-                  className="border-slate-700"
+                  className="w-full border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
+                  onClick={() => {
+                    setShowFundDialog(false);
+                    setShowSwapDialog(true);
+                  }}
+                  disabled={isFunding}
+                >
+                  🔄 Swap ETH to USDC First
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full"
                   onClick={() => {
                     setShowFundDialog(false);
                     setSelectedJob(null);
@@ -558,6 +573,18 @@ export default function ClientDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Swap Dialog */}
+      <SwapToUSDC
+        open={showSwapDialog}
+        onClose={() => setShowSwapDialog(false)}
+        targetUSDC={selectedJob?.budget_usdc || 0}
+        onSuccess={() => {
+          toast.success('Swap completed! Now you can fund the job.');
+          setShowSwapDialog(false);
+          setShowFundDialog(true);
+        }}
+      />
 
       {/* Profile Modal */}
       <ProfileModal
