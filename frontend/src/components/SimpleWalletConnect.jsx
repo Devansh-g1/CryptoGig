@@ -14,11 +14,34 @@ export default function SimpleWalletConnect() {
         .then(accounts => {
           if (accounts.length > 0) {
             setAccount(accounts[0]);
+            checkNetwork();
           }
         })
         .catch(console.error);
+      
+      // Listen for network changes
+      window.ethereum.on('chainChanged', checkNetwork);
+      
+      return () => {
+        if (window.ethereum.removeListener) {
+          window.ethereum.removeListener('chainChanged', checkNetwork);
+        }
+      };
     }
   }, []);
+
+  const checkNetwork = async () => {
+    if (!window.ethereum) return;
+    
+    try {
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (chainId !== '0xaa36a7') { // Not Sepolia
+        toast.error('⚠️ Please switch to Sepolia network', { duration: 5000 });
+      }
+    } catch (error) {
+      console.error('Failed to check network:', error);
+    }
+  };
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -38,12 +61,13 @@ export default function SimpleWalletConnect() {
         setAccount(accounts[0]);
         toast.success('Wallet connected successfully!');
         
-        // Try to switch to Polygon Amoy testnet
+        // Force switch to Sepolia testnet
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x13882' }], // Polygon Amoy testnet
+            params: [{ chainId: '0xaa36a7' }], // Sepolia testnet (11155111 in hex)
           });
+          toast.success('Switched to Sepolia network');
         } catch (switchError) {
           // If network doesn't exist, add it
           if (switchError.code === 4902) {
@@ -51,21 +75,24 @@ export default function SimpleWalletConnect() {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
-                  chainId: '0x13882',
-                  chainName: 'Polygon Amoy Testnet',
+                  chainId: '0xaa36a7',
+                  chainName: 'Sepolia Testnet',
                   nativeCurrency: {
-                    name: 'MATIC',
-                    symbol: 'MATIC',
+                    name: 'ETH',
+                    symbol: 'ETH',
                     decimals: 18
                   },
-                  rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                  blockExplorerUrls: ['https://www.oklink.com/amoy']
+                  rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+                  blockExplorerUrls: ['https://sepolia.etherscan.io']
                 }]
               });
-              toast.success('Polygon Amoy network added!');
+              toast.success('Sepolia network added!');
             } catch (addError) {
               console.error('Failed to add network:', addError);
+              toast.error('Please manually switch to Sepolia network');
             }
+          } else {
+            toast.error('Please manually switch to Sepolia network');
           }
         }
       }

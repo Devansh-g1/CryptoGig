@@ -1511,6 +1511,73 @@ async def get_my_channels(current_user: dict = Depends(get_current_user)):
     
     return channels
 
+# Admin endpoints
+async def verify_admin(current_user: dict = Depends(get_current_user)):
+    """Verify user is admin"""
+    admin_email = "devanshgoyal1234@gmail.com"
+    admin_wallet = "0x6a413e4c59cfb5d4544d5eca74dacf7848b3a483"
+    
+    if current_user['email'] != admin_email and current_user.get('wallet_address', '').lower() != admin_wallet.lower():
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+@api_router.get("/admin/arbitrators")
+async def get_arbitrators(admin: dict = Depends(verify_admin)):
+    """Get all arbitrators"""
+    arbitrators = await db.users.find({'role': 'arbitrator'}, {'_id': 0}).to_list(100)
+    return {"arbitrators": arbitrators}
+
+@api_router.get("/admin/users")
+async def get_all_users(admin: dict = Depends(verify_admin)):
+    """Get all users"""
+    users = await db.users.find({}, {'_id': 0}).to_list(1000)
+    return {"users": users}
+
+@api_router.post("/admin/arbitrators")
+async def assign_arbitrator(
+    request: dict,
+    admin: dict = Depends(verify_admin)
+):
+    """Assign a user as arbitrator"""
+    user_id = request.get('user_id')
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    
+    user = await db.users.find_one({'id': user_id}, {'_id': 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update user role to arbitrator
+    await db.users.update_one(
+        {'id': user_id},
+        {'$set': {'role': 'arbitrator', 'active_role': 'arbitrator'}}
+    )
+    
+    logger.info(f"Admin {admin['email']} assigned {user['email']} as arbitrator")
+    return {"message": "User assigned as arbitrator", "user_id": user_id}
+
+@api_router.delete("/admin/arbitrators/{user_id}")
+async def remove_arbitrator(
+    user_id: str,
+    admin: dict = Depends(verify_admin)
+):
+    """Remove arbitrator role from user"""
+    user = await db.users.find_one({'id': user_id}, {'_id': 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user['role'] != 'arbitrator':
+        raise HTTPException(status_code=400, detail="User is not an arbitrator")
+    
+    # Change role back to freelancer
+    await db.users.update_one(
+        {'id': user_id},
+        {'$set': {'role': 'freelancer', 'active_role': 'freelancer'}}
+    )
+    
+    logger.info(f"Admin {admin['email']} removed arbitrator role from {user['email']}")
+    return {"message": "Arbitrator role removed", "user_id": user_id}
+
 # Health check endpoint for Railway
 @api_router.get("/health")
 async def health_check():
@@ -1520,12 +1587,12 @@ async def health_check():
         await db.command("ping")
         return {
             "status": "healthy",
-            "version": "2.2.0-SEPOLIA-READY",
+            "version": "2.3.0-ADMIN-PORTAL",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "database": "connected",
             "service": "cryptogig-backend",
-            "features": ["instant_registration", "mongodb_integrated", "no_email_verification", "cors_configured", "pending_payment_status"],
-            "git_commit": "sepolia-v1"
+            "features": ["instant_registration", "mongodb_integrated", "no_email_verification", "cors_configured", "pending_payment_status", "admin_portal"],
+            "git_commit": "admin-v1"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")

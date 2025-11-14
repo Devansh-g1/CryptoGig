@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import SimpleWalletConnect from '../components/SimpleWalletConnect';
+import { useFundJob } from '../hooks/useFundJob';
 import {
   Plus,
   Briefcase,
@@ -45,11 +46,13 @@ export default function ClientDashboard() {
   const { user, logout, refreshUser, linkWallet } = useAuth();
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
+  const { fundJob, isLoading: isFunding } = useFundJob();
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState({});
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [showDispute, setShowDispute] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showFundDialog, setShowFundDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -331,21 +334,20 @@ export default function ClientDashboard() {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      {job.status === 'created' && isConnected && (
+                      {(job.status === 'pending_payment' || job.status === 'created') && isConnected && (
                         <Button
                           size="sm"
                           className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                           onClick={() => {
-                            toast.info('Funding job with USDC escrow...');
-                            toast.info(`Amount: ${job.budget_usdc} USDC`);
-                            toast.info('Arbitrator fee: 5% (8% if disputed)');
-                            // This would call the useFundJob hook
+                            setSelectedJob(job);
+                            setShowFundDialog(true);
                           }}
+                          disabled={isFunding}
                         >
-                          💰 Fund Job
+                          💰 {isFunding ? 'Funding...' : 'Fund Job'}
                         </Button>
                       )}
-                      {job.status === 'created' && !isConnected && (
+                      {(job.status === 'pending_payment' || job.status === 'created') && !isConnected && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -484,6 +486,76 @@ export default function ClientDashboard() {
               {loading ? 'Submitting...' : 'Raise Dispute'}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fund Job Dialog */}
+      <Dialog open={showFundDialog} onOpenChange={setShowFundDialog}>
+        <DialogContent className="sm:max-w-lg bg-slate-900 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold gradient-text">Fund Job with USDC</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Transfer USDC to escrow contract on Sepolia testnet
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedJob && (
+            <div className="space-y-4">
+              <div className="bg-slate-800 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Job:</span>
+                  <span className="font-semibold">{selectedJob.title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Amount:</span>
+                  <span className="text-2xl font-bold text-cyan-400">${selectedJob.budget_usdc} USDC</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Platform Fee (5%):</span>
+                  <span className="text-amber-400">${(selectedJob.budget_usdc * 0.05).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Dispute Fee (if raised):</span>
+                  <span className="text-red-400">+3% (total 8%)</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <p className="text-sm text-blue-200">
+                  ℹ️ Make sure you have USDC on Sepolia testnet. Get test USDC from faucets.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  onClick={async () => {
+                    const success = await fundJob(selectedJob.id, selectedJob.budget_usdc);
+                    if (success) {
+                      setShowFundDialog(false);
+                      setSelectedJob(null);
+                      fetchJobs();
+                      fetchStats();
+                    }
+                  }}
+                  disabled={isFunding}
+                >
+                  {isFunding ? 'Processing...' : '💰 Fund Now'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-slate-700"
+                  onClick={() => {
+                    setShowFundDialog(false);
+                    setSelectedJob(null);
+                  }}
+                  disabled={isFunding}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

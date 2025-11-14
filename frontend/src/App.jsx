@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPageWorking';
 import ClientDashboard from './pages/ClientDashboard';
 import FreelancerDashboard from './pages/FreelancerDashboard';
 import ArbitratorDashboard from './pages/ArbitratorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import CommunityPage from './pages/CommunityPage';
 import VerifyEmail from './pages/VerifyEmail';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -91,6 +92,7 @@ function App() {
                 <Route path="/client" element={<ProtectedRoute allowedRole="client"><ClientDashboard /></ProtectedRoute>} />
                 <Route path="/freelancer" element={<ProtectedRoute allowedRole="freelancer"><FreelancerDashboard /></ProtectedRoute>} />
                 <Route path="/arbitrator" element={<ProtectedRoute allowedRole="arbitrator"><ArbitratorDashboard /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
               </Routes>
             </BrowserRouter>
