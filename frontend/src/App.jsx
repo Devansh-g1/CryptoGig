@@ -16,31 +16,42 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { wagmiConfig } from './config/wagmi';
 import '@rainbow-me/rainbowkit/styles.css';
 
-// Suppress wallet-related errors in development
-if (process.env.NODE_ENV === 'development') {
-  const originalError = console.error;
-  console.error = (...args) => {
-    const errorStr = String(args[0] || '');
-    if (errorStr.includes('WalletConnect') || 
-        errorStr.includes('Connection interrupted') ||
-        errorStr.includes('runtime.sendMessage') ||
-        errorStr.includes('Extension ID')) {
-      return; // Suppress wallet-related errors
-    }
-    originalError.apply(console, args);
-  };
-  
-  // Also suppress runtime errors
-  window.addEventListener('error', (e) => {
-    const errorStr = String(e.message || '');
-    if (errorStr.includes('runtime.sendMessage') || 
-        errorStr.includes('Extension ID') ||
-        errorStr.includes('WalletConnect')) {
-      e.preventDefault();
-      return false;
-    }
-  });
-}
+// Suppress wallet-related errors (both dev and production)
+const originalError = console.error;
+console.error = (...args) => {
+  const errorStr = String(args[0] || '');
+  if (errorStr.includes('WalletConnect') || 
+      errorStr.includes('Connection interrupted') ||
+      errorStr.includes('runtime.sendMessage') ||
+      errorStr.includes('Extension ID') ||
+      errorStr.includes('inpage.js')) {
+    return; // Suppress wallet-related errors
+  }
+  originalError.apply(console, args);
+};
+
+// Also suppress runtime errors
+window.addEventListener('error', (e) => {
+  const errorStr = String(e.message || '');
+  if (errorStr.includes('runtime.sendMessage') || 
+      errorStr.includes('Extension ID') ||
+      errorStr.includes('WalletConnect') ||
+      errorStr.includes('inpage.js')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Suppress unhandled promise rejections
+window.addEventListener('unhandledrejection', (e) => {
+  const errorStr = String(e.reason || '');
+  if (errorStr.includes('runtime.sendMessage') || 
+      errorStr.includes('Extension ID') ||
+      errorStr.includes('inpage.js')) {
+    e.preventDefault();
+    return false;
+  }
+});
 
 const queryClient = new QueryClient();
 

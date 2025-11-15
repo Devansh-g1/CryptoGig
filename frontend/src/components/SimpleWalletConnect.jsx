@@ -46,6 +46,10 @@ export default function SimpleWalletConnect() {
   const connectWallet = async () => {
     if (!window.ethereum) {
       toast.error('MetaMask not found. Please install MetaMask extension.');
+      // Redirect to helper page
+      setTimeout(() => {
+        window.open('https://metamask.io/download/', '_blank');
+      }, 1000);
       return;
     }
 
@@ -55,9 +59,15 @@ export default function SimpleWalletConnect() {
       // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
+      }).catch(err => {
+        // Ignore extension ID errors
+        if (err.message && err.message.includes('Extension ID')) {
+          return [];
+        }
+        throw err;
       });
       
-      if (accounts.length > 0) {
+      if (accounts && accounts.length > 0) {
         setAccount(accounts[0]);
         toast.success('Wallet connected successfully!');
         
@@ -66,6 +76,12 @@ export default function SimpleWalletConnect() {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0xaa36a7' }], // Sepolia testnet (11155111 in hex)
+          }).catch(err => {
+            // Ignore extension ID errors
+            if (err.message && err.message.includes('Extension ID')) {
+              return;
+            }
+            throw err;
           });
           toast.success('Switched to Sepolia network');
         } catch (switchError) {
@@ -85,20 +101,43 @@ export default function SimpleWalletConnect() {
                   rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
                   blockExplorerUrls: ['https://sepolia.etherscan.io']
                 }]
+              }).catch(err => {
+                // Ignore extension ID errors
+                if (err.message && err.message.includes('Extension ID')) {
+                  return;
+                }
+                throw err;
               });
               toast.success('Sepolia network added!');
             } catch (addError) {
               console.error('Failed to add network:', addError);
-              toast.error('Please manually switch to Sepolia network');
+              toast.info('Please use the helper page to add Sepolia');
+              // Open helper page
+              setTimeout(() => {
+                window.open('/add-sepolia.html', '_blank');
+              }, 1000);
             }
-          } else {
-            toast.error('Please manually switch to Sepolia network');
+          } else if (switchError.code !== 4001) { // Ignore user rejection
+            toast.info('Please use the helper page to add Sepolia');
+            setTimeout(() => {
+              window.open('/add-sepolia.html', '_blank');
+            }, 1000);
           }
         }
       }
     } catch (error) {
-      console.error('Connection failed:', error);
-      toast.error('Failed to connect wallet');
+      // Ignore extension ID errors
+      if (error.message && error.message.includes('Extension ID')) {
+        toast.info('Please connect manually in MetaMask');
+        return;
+      }
+      
+      if (error.code === 4001) {
+        toast.error('Connection rejected');
+      } else {
+        console.error('Connection failed:', error);
+        toast.error('Failed to connect wallet');
+      }
     } finally {
       setIsConnecting(false);
     }
