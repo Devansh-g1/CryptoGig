@@ -6,8 +6,8 @@ import axios from 'axios';
 
 const API = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
-// Sepolia USDC address (mock USDC for testing)
-const USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'; // Sepolia USDC
+// Holesky USDC address (mock USDC for testing)
+const USDC_ADDRESS = '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8'; // Holesky USDC
 const ESCROW_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
 // Minimal ERC20 ABI for approve

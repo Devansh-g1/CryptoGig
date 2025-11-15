@@ -35,8 +35,8 @@ export default function SimpleWalletConnect() {
     
     try {
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId !== '0xaa36a7') { // Not Sepolia
-        toast.error('⚠️ Please switch to Sepolia network', { duration: 5000 });
+      if (chainId !== '0x4268') { // Not Holesky
+        toast.error('⚠️ Please switch to Holesky network', { duration: 5000 });
       }
     } catch (error) {
       console.error('Failed to check network:', error);
@@ -61,13 +61,13 @@ export default function SimpleWalletConnect() {
         setAccount(accounts[0]);
         toast.success('Wallet connected successfully!');
         
-        // Force switch to Sepolia testnet
+        // Force switch to Holesky testnet
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0xaa36a7' }], // Sepolia testnet (11155111 in hex)
+            params: [{ chainId: '0x4268' }], // Holesky testnet (17000 in hex)
           });
-          toast.success('Switched to Sepolia network');
+          toast.success('Switched to Holesky network');
         } catch (switchError) {
           // If network doesn't exist, add it
           if (switchError.code === 4902) {
@@ -75,24 +75,24 @@ export default function SimpleWalletConnect() {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
-                  chainId: '0xaa36a7',
-                  chainName: 'Sepolia Testnet',
+                  chainId: '0x4268',
+                  chainName: 'Holesky Testnet',
                   nativeCurrency: {
                     name: 'ETH',
                     symbol: 'ETH',
                     decimals: 18
                   },
-                  rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
-                  blockExplorerUrls: ['https://sepolia.etherscan.io']
+                  rpcUrls: ['https://ethereum-holesky-rpc.publicnode.com'],
+                  blockExplorerUrls: ['https://holesky.etherscan.io']
                 }]
               });
-              toast.success('Sepolia network added!');
+              toast.success('Holesky network added!');
             } catch (addError) {
               console.error('Failed to add network:', addError);
-              toast.error('Please manually switch to Sepolia network');
+              toast.error('Please manually switch to Holesky network');
             }
           } else {
-            toast.error('Please manually switch to Sepolia network');
+            toast.error('Please manually switch to Holesky network');
           }
         }
       }

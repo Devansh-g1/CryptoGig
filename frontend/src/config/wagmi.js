@@ -1,16 +1,16 @@
 import { http, createConfig } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
+import { holesky } from 'wagmi/chains';
 import { injected } from 'wagmi/connectors';
 
-// Force Sepolia only - no mainnet
+// Force Holesky testnet only - better faucet availability
 export const wagmiConfig = createConfig({
-  chains: [sepolia],
+  chains: [holesky],
   connectors: [
     injected({
       target: 'metaMask',
     }),
   ],
   transports: {
-    [sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com'),
+    [holesky.id]: http('https://ethereum-holesky-rpc.publicnode.com'),
   },
 });
