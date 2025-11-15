@@ -90,8 +90,10 @@
 ## 🧪 Testing
 
 ### Get Test Tokens
-- **Sepolia ETH**: https://sepoliafaucet.com
-- **Sepolia USDC**: https://faucet.circle.com
+- **Holesky ETH (PoW Faucet)**: https://holesky-faucet.pk910.de (Up to 10 ETH!)
+- **Holesky ETH (QuickNode)**: https://faucet.quicknode.com/ethereum/holesky
+- **Holesky ETH (Alchemy)**: https://www.alchemy.com/faucets/ethereum-holesky
+- **Mock USDC**: Deploy your own or use 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8
 
 ### Test Accounts
 Create test accounts with different roles:
@@ -108,12 +110,12 @@ Create test accounts with different roles:
 | Job Creation | Free | - |
 | Wallet Connection | Free | - |
 
-## 🔧 Smart Contract Addresses (Sepolia)
+## 🔧 Smart Contract Addresses (Holesky)
 
 | Contract | Address |
 |----------|---------|
-| **USDC** | 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238 |
-| **WETH** | 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 |
+| **USDC** | 0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8 |
+| **WETH** | 0x94373a4919B3240D86eA41593D5eBa789FEF3848 |
 | **Uniswap Router** | 0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008 |
 | **Escrow** | (Set in .env) |
 
@@ -151,19 +153,20 @@ Create test accounts with different roles:
 
 ### Wallet Not Connecting
 1. Install MetaMask or Rainbow wallet
-2. Switch to Sepolia network
+2. Switch to Holesky network
 3. Refresh page
 4. Try connecting again
 
 ### Wrong Network
-1. Wallet will auto-switch to Sepolia
+1. Wallet will auto-switch to Holesky
 2. If not, manually switch in wallet
 3. Refresh page
 
 ### Insufficient USDC
-1. Get test USDC from faucet
+1. Deploy your own mock USDC (see HOLESKY_MIGRATION_GUIDE.md)
 2. Or use "Swap ETH to USDC" feature
 3. Ensure you have ETH for gas
+4. Use provided mock USDC address
 
 ### Swap Failed
 1. Check ETH balance (need for gas)
