@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic - CryptoGig</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #00d4ff; margin-bottom: 20px; }
+        .test { background: #16213e; padding: 20px; margin-bottom: 15px; border-radius: 10px; border-left: 4px solid #0f3460; }
+        .test.success { border-left-color: #10b981; }
+        .test.error { border-left-color: #ef4444; }
+        .test h3 { margin-bottom: 10px; color: #00d4ff; }
+        .result { background: #0f3460; padding: 10px; border-radius: 5px; margin-top: 10px; font-family: monospace; font-size: 12px; }
+        .btn { background: #00d4ff; color: #1a1a2e; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+        .btn:hover { background: #00b8d4; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .status.ok { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .status.pending { background: #f59e0b; color: white; }
+        pre { background: #0a0a0a; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 CryptoGig Diagnostic Tool</h1>
+        <p style="margin-bottom: 20px; color: #aaa;">This will test all connections and show you exactly what's working and what's not.</p>
+        
+        <button class="btn" onclick="runAllTests()">▶️ Run All Tests</button>
+        
+        <div id="tests"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://clientarbitrator-production.up.railway.app';
+        const FRONTEND_URL = 'https://cryptogig-platform.netlify.app';
+
+        async function runAllTests() {
+            const testsDiv = document.getElementById('tests');
+            testsDiv.innerHTML = '';
+            
+            await testBackendHealth();
+            await testCORS();
+            await testMetaMask();
+            await testNetwork();
+            await testAuth();
+        }
+
+        function addTest(title, status, details) {
+            const testsDiv = document.getElementById('tests');
+            const statusClass = status === 'success' ? 'ok' : status === 'error' ? 'fail' : 'pending';
+            const testClass = status === 'success' ? 'success' : status === 'error' ? 'error' : '';
+            
+            testsDiv.innerHTML += `
+                <div class="test ${testClass}">
+                    <h3>${title} <span class="status ${statusClass}">${status.toUpperCase()}</span></h3>
+                    <div class="result">${details}</div>
+                </div>
+            `;
+        }
+
+        async function testBackendHealth() {
+            try {
+                const response = await fetch(`${API_URL}/api/health`);
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    addTest('1. Backend Health', 'success', 
+                        `✅ Backend is healthy<br>` +
+                        `Version: ${data.version}<br>` +
+                        `Database: ${data.database}<br>` +
+                        `Features: ${data.features.join(', ')}`
+                    );
+                } else {
+                    addTest('1. Backend Health', 'error', 
+                        `❌ Backend unhealthy: ${JSON.stringify(data)}`
+                    );
+                }
+            } catch (error) {
+                addTest('1. Backend Health', 'error', 
+                    `❌ Cannot reach backend<br>Error: ${error.message}`
+                );
+            }
+        }
+
+        async function testCORS() {
+            try {
+                const response = await fetch(`${API_URL}/api/jobs`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': FRONTEND_URL
+                    }
+                });
+                
+                const corsHeader = response.headers.get('access-control-allow-origin');
+                
+                if (corsHeader) {
+                    addTest('2. CORS Configuration', 'success', 
+                        `✅ CORS is working!<br>` +
+                        `Access-Control-Allow-Origin: ${corsHeader}<br>` +
+                        `Status: ${response.status}<br>` +
+                        `${response.status === 401 ? '(401 is OK - means you need to login)' : ''}`
+                    );
+                } else {
+                    addTest('2. CORS Configuration', 'error', 
+                        `❌ CORS header missing<br>Status: ${response.status}`
+                    );
+                }
+            } catch (error) {
+                addTest('2. CORS Configuration', 'error', 
+                    `❌ CORS test failed<br>` +
+                    `Error: ${error.message}<br>` +
+                    `This usually means CORS is blocking the request`
+                );
+            }
+        }
+
+        async function testMetaMask() {
+            if (typeof window.ethereum === 'undefined') {
+                addTest('3. MetaMask', 'error', 
+                    `❌ MetaMask not installed<br>` +
+                    `Install from: <a href="https://metamask.io/download/" target="_blank" style="color: #00d4ff;">metamask.io/download</a>`
+                );
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                if (accounts.length > 0) {
+                    addTest('3. MetaMask', 'success', 
+                        `✅ MetaMask connected<br>` +
+                        `Address: ${accounts[0]}`
+                    );
+                } else {
+                    addTest('3. MetaMask', 'pending', 
+                        `⚠️ MetaMask installed but not connected<br>` +
+                        `Click "Connect Wallet" on the platform`
+                    );
+                }
+            } catch (error) {
+                addTest('3. MetaMask', 'error', 
+                    `❌ MetaMask error: ${error.message}`
+                );
+            }
+        }
+
+        async function testNetwork() {
+            if (typeof window.ethereum === 'undefined') {
+                addTest('4. Network', 'error', `❌ MetaMask not installed`);
+                return;
+            }
+
+            try {
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const chainIdDecimal = parseInt(chainId, 16);
+                
+                const networks = {
+                    1: 'Ethereum Mainnet',
+                    11155111: 'Sepolia Testnet',
+                    137: 'Polygon Mainnet',
+                    80002: 'Polygon Amoy Testnet'
+                };
+                
+                const networkName = networks[chainIdDecimal] || `Unknown (${chainIdDecimal})`;
+                
+                if (chainIdDecimal === 11155111) {
+                    addTest('4. Network', 'success', 
+                        `✅ Correct network!<br>` +
+                        `Network: ${networkName}<br>` +
+                        `Chain ID: ${chainIdDecimal}`
+                    );
+                } else {
+                    addTest('4. Network', 'error', 
+                        `❌ Wrong network!<br>` +
+                        `Current: ${networkName} (${chainIdDecimal})<br>` +
+                        `Expected: Sepolia Testnet (11155111)<br>` +
+                        `<br>Fix: <a href="/add-sepolia.html" style="color: #00d4ff;">Add Sepolia Network</a>`
+                    );
+                }
+            } catch (error) {
+                addTest('4. Network', 'error', 
+                    `❌ Network check failed: ${error.message}`
+                );
+            }
+        }
+
+        async function testAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                addTest('5. Authentication', 'pending', 
+                    `⚠️ Not logged in<br>` +
+                    `You need to register/login first<br>` +
+                    `<br>Go to: <a href="/" style="color: #00d4ff;">Platform Home</a> and click "Get Started"`
+                );
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    addTest('5. Authentication', 'success', 
+                        `✅ Logged in<br>` +
+                        `Email: ${user.email}<br>` +
+                        `Role: ${user.role}<br>` +
+                        `Active Role: ${user.active_role || user.role}`
+                    );
+                } else {
+                    addTest('5. Authentication', 'error', 
+                        `❌ Token invalid or expired<br>` +
+                        `Status: ${response.status}<br>` +
+                        `Please login again`
+                    );
+                }
+            } catch (error) {
+                addTest('5. Authentication', 'error', 
+                    `❌ Auth check failed: ${error.message}`
+                );
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
