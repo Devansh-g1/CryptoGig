@@ -1598,21 +1598,33 @@ async def health_check():
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
-# Add CORS middleware BEFORE including router
+# Configure CORS origins
 cors_origins_str = os.environ.get('CORS_ORIGINS', '*')
 cors_origins = [origin.strip() for origin in cors_origins_str.split(',')] if cors_origins_str != '*' else ['*']
 logger.info(f"CORS Origins configured: {cors_origins}")
 
+# Add CORS middleware FIRST - before router
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
     allow_origins=cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
-# Include router
+# Include router AFTER middleware
 app.include_router(api_router)
+
+# Add a root endpoint for testing
+@app.get("/")
+async def root():
+    return {
+        "message": "CryptoGig API",
+        "status": "running",
+        "cors_configured": True,
+        "cors_origins": cors_origins
+    }
 
 # Startup message
 logger.info("=" * 50)

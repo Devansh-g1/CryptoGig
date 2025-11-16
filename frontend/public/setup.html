@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Setup - CryptoGig</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        
+        .step.completed {
+            border-left-color: #10b981;
+            background: #d4edda;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .step.completed .step-number {
+            background: #10b981;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .warning-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚀 Complete Setup Guide</h1>
+            <p style="color: #666; margin-bottom: 20px;">Follow these steps in order to fix all issues</p>
+            
+            <div class="warning-box">
+                <h3>⚠️ Important: You Have Mainnet ETH</h3>
+                <p>Your ETH is on Ethereum Mainnet (real money). This platform uses <strong>Sepolia Testnet</strong> (fake money for testing).</p>
+                <p style="margin-top: 10px;"><strong>You need to:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                    <li>Add Sepolia network to MetaMask</li>
+                    <li>Get FREE test ETH from faucets</li>
+                    <li>Switch to Sepolia before using platform</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Step 1: Clear Cache -->
+        <div class="card">
+            <div class="step" id="step1">
+                <h2><span class="step-number">1</span>Clear Browser Cache</h2>
+                <p>This fixes the CORS error you're seeing. The error is cached in your browser.</p>
+                <button id="clearCacheBtn" class="btn btn-primary" onclick="clearCache()">
+                    🧹 Clear All Cache
+                </button>
+                <div id="step1Status"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Add Sepolia -->
+        <div class="card">
+            <div class="step" id="step2">
+                <h2><span class="step-number">2</span>Add Sepolia Network</h2>
+                <p>Add Sepolia testnet to MetaMask. This is different from Ethereum Mainnet.</p>
+                <button id="addSepoliaBtn" class="btn btn-primary" onclick="addSepolia()">
+                    🌐 Add Sepolia to MetaMask
+                </button>
+                <div id="step2Status"></div>
+                <div class="info-box">
+                    <strong>Network Details:</strong><br>
+                    Name: Sepolia Testnet<br>
+                    Chain ID: 11155111<br>
+                    RPC: https://ethereum-sepolia-rpc.publicnode.com
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Get Test ETH -->
+        <div class="card">
+            <div class="step" id="step3">
+                <h2><span class="step-number">3</span>Get FREE Test ETH</h2>
+                <p>Get free Sepolia ETH from faucets. This is NOT real money!</p>
+                <button class="btn btn-primary" onclick="window.open('https://sepoliafaucet.com', '_blank')">
+                    💧 Alchemy Faucet (0.5 ETH)
+                </button>
+                <button class="btn btn-primary" onclick="window.open('https://www.infura.io/faucet/sepolia', '_blank')">
+                    💧 Infura Faucet (0.5 ETH)
+                </button>
+                <button class="btn btn-primary" onclick="window.open('https://faucet.quicknode.com/ethereum/sepolia', '_blank')">
+                    💧 QuickNode Faucet (0.1 ETH)
+                </button>
+                <div class="info-box" style="margin-top: 15px;">
+                    <strong>How to use faucets:</strong><br>
+                    1. Click a faucet button above<br>
+                    2. Copy your wallet address from MetaMask<br>
+                    3. Paste it in the faucet<br>
+                    4. Complete captcha<br>
+                    5. Wait 1-2 minutes<br>
+                    6. Check MetaMask - you should see test ETH!
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Go to Platform -->
+        <div class="card">
+            <div class="step" id="step4">
+                <h2><span class="step-number">4</span>Use the Platform</h2>
+                <p>Now you're ready! Make sure you're on Sepolia network.</p>
+                <button class="btn btn-success" onclick="window.location.href='/'">
+                    🚀 Go to Platform
+                </button>
+                <div class="info-box" style="margin-top: 15px;">
+                    <strong>Before you go:</strong><br>
+                    ✅ Cache cleared<br>
+                    ✅ Sepolia network added<br>
+                    ✅ MetaMask shows "Sepolia" at top<br>
+                    ✅ Have at least 0.1 test ETH<br>
+                    <br>
+                    <strong>On the platform:</strong><br>
+                    1. Register (Role: Client)<br>
+                    2. Connect wallet<br>
+                    3. Create job<br>
+                    4. Done!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function clearCache() {
+            const btn = document.getElementById('clearCacheBtn');
+            const status = document.getElementById('step1Status');
+            const step = document.getElementById('step1');
+            
+            btn.disabled = true;
+            btn.textContent = 'Clearing...';
+            status.innerHTML = '<div class="status info">Clearing cache...</div>';
+            
+            try {
+                // Clear everything
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Clear service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+                
+                // Clear cache storage
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                }
+                
+                status.innerHTML = '<div class="status success">✅ Cache cleared! You can proceed to next step.</div>';
+                step.classList.add('completed');
+                btn.textContent = '✅ Cache Cleared';
+                
+            } catch (error) {
+                status.innerHTML = '<div class="status error">❌ Error: ' + error.message + '</div>';
+                btn.disabled = false;
+                btn.textContent = '🧹 Try Again';
+            }
+        }
+
+        async function addSepolia() {
+            const btn = document.getElementById('addSepoliaBtn');
+            const status = document.getElementById('step2Status');
+            const step = document.getElementById('step2');
+            
+            if (typeof window.ethereum === 'undefined') {
+                status.innerHTML = '<div class="status error">❌ MetaMask not found. Please install MetaMask extension.</div>';
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            status.innerHTML = '<div class="status info">Please approve in MetaMask...</div>';
+            
+            try {
+                // Try to switch first
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0xaa36a7' }],
+                });
+                
+                status.innerHTML = '<div class="status success">✅ Switched to Sepolia! Check MetaMask - it should show "Sepolia" at top.</div>';
+                step.classList.add('completed');
+                btn.textContent = '✅ Sepolia Added';
+                
+            } catch (switchError) {
+                // If network doesn't exist, add it
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0xaa36a7',
+                                chainName: 'Sepolia Testnet',
+                                nativeCurrency: {
+                                    name: 'ETH',
+                                    symbol: 'ETH',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+                                blockExplorerUrls: ['https://sepolia.etherscan.io']
+                            }]
+                        });
+                        
+                        status.innerHTML = '<div class="status success">✅ Sepolia added! Check MetaMask - it should show "Sepolia" at top.</div>';
+                        step.classList.add('completed');
+                        btn.textContent = '✅ Sepolia Added';
+                        
+                    } catch (addError) {
+                        status.innerHTML = '<div class="status error">❌ Failed to add network. Error: ' + addError.message + '</div>';
+                        btn.disabled = false;
+                        btn.textContent = '🌐 Try Again';
+                    }
+                } else if (switchError.code === 4001) {
+                    status.innerHTML = '<div class="status error">❌ Request rejected. Please try again.</div>';
+                    btn.disabled = false;
+                    btn.textContent = '🌐 Try Again';
+                } else {
+                    status.innerHTML = '<div class="status error">❌ Error: ' + switchError.message + '</div>';
+                    btn.disabled = false;
+                    btn.textContent = '🌐 Try Again';
+                }
+            }
+        }
+
+        // Check MetaMask on load
+        window.addEventListener('load', () => {
+            if (typeof window.ethereum === 'undefined') {
+                document.getElementById('step2Status').innerHTML = 
+                    '<div class="status error">⚠️ MetaMask not detected. <a href="https://metamask.io/download/" target="_blank">Install MetaMask</a></div>';
+            }
+        });
+    </script>
+</body>
+</html>
